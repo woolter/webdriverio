@@ -31,6 +31,7 @@ export const selectByVisibleText = require('./element/selectByVisibleText').defa
 export const setValue = require('./element/setValue').default
 export const shadow$$ = require('./element/shadow$$').default
 export const shadow$ = require('./element/shadow$').default
+export const swipe = require('./element/swipe').default
 export const touchAction = require('./element/touchAction').default
 export const waitForDisplayed = require('./element/waitForDisplayed').default
 export const waitForEnabled = require('./element/waitForEnabled').default
