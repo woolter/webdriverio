@@ -5,6 +5,7 @@ import DevToolsDriver from './driver'
 import Auditor from './auditor'
 import TraceGatherer from './gatherer/trace'
 import DevtoolsGatherer from './gatherer/devtools'
+import CoverageGatherer from './gatherer/coverage'
 import { findCDPInterface, getCDPClient } from './utils'
 import { NETWORK_STATES, DEFAULT_NETWORK_THROTTLING_STATE } from './constants'
 
@@ -68,6 +69,13 @@ export default class DevToolsService {
 
             this.devtoolsGatherer = new DevtoolsGatherer()
             this.client.on('event', ::this.devtoolsGatherer.onMessage)
+
+            /**
+             * register coverage gatherer if options is set by user
+             */
+            if (typeof this.options.coverageLogDir === 'string') {
+                this.coverageGatherer = new CoverageGatherer(this.devtoolsDriver, this.options.coverageLogDir)
+            }
 
             log.info(`Connected to Chrome on ${debuggerAddress.host}:${debuggerAddress.port}`)
         } catch (err) {
@@ -134,6 +142,12 @@ export default class DevToolsService {
                 resolve()
             })
         })
+    }
+
+    async after () {
+        if (this.coverageGatherer) {
+            await this.coverageGatherer.logCoverage()
+        }
     }
 
     /**
