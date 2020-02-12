@@ -1,5 +1,4 @@
 import path from 'path'
-import Mocha from 'mocha'
 
 import logger from '@wdio/logger'
 import { runTestInFiberContext, executeHooksWithArgs } from '@wdio/utils'
@@ -41,10 +40,15 @@ class MochaAdapter {
         this.testCnt = new Map()
         this.suiteIds = ['0']
         this._hasTests = true
+        this.Mocha = this.config.sharding === 'block'
+            ? require('mocha-parallel-tests').default
+            : require('mocha')
     }
 
     async init () {
+        const { Mocha } = this
         const { mochaOpts } = this.config
+
         const mocha = this.mocha = new Mocha(mochaOpts)
         mocha.loadFiles()
         mocha.reporter(NOOP)
@@ -58,9 +62,12 @@ class MochaAdapter {
     }
 
     _loadFiles (mochaOpts) {
+        const { Mocha } = this
+
         if (this.config.featureFlags.specFiltering !== true) {
             return false
         }
+
         try {
             this.mocha.loadFiles()
 

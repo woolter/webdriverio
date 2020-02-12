@@ -32,7 +32,8 @@
   "dependencies": {
     "@wdio/logger": "6.0.0-alpha.0",
     "@wdio/utils": "6.0.0-alpha.1",
-    "mocha": "^7.0.1"
+    "mocha": "^7.0.1",
+    "mocha-parallel-tests": "^2.3.0"
   },
   "devDependencies": {
     "@types/mocha": "^7.0.0"
