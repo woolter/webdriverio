@@ -24,6 +24,7 @@ export const DEFAULT_CONFIGS = () => ({
     execArgv: [],
     runnerEnv: {},
     runner: 'local',
+    sharding: 'file',
     featureFlags: {
         specFiltering: undefined
     },

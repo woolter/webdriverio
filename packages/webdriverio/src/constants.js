@@ -270,6 +270,19 @@ export const WDIO_DEFAULTS = {
             }
         }
     },
+    /**
+     * type of sharding:
+     *  * file: file based sharding - one session per spec/feature file
+     *  * block: block based sharding - one session per test block
+     */
+    sharding: {
+        type: (param) => {
+            if (!['file', 'block'].includes(param)) {
+                throw new Error(`the "sharding" option needs to be either "file" or "block", you set "${param}"`)
+            }
+        },
+        default: 'file'
+    },
 
     /**
      * hooks

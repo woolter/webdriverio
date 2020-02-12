@@ -25,6 +25,7 @@ exports.config = {
     logLevel: 'trace',
     framework: 'mocha',
     outputDir: __dirname,
+    sharding: 'block',
 
     reporters: ['spec', 'dot', 'junit'],
 

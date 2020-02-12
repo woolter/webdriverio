@@ -25,10 +25,11 @@ const DEFAULT_INTERFACE_TYPE = 'bdd'
  * Mocha runner
  */
 class MochaAdapter {
-    constructor (cid, config, specs, capabilities, reporter) {
+    constructor (cid, config, specs, capabilities, reporter, sessionFactory = NOOP) {
         this.cid = cid
         this.capabilities = capabilities
         this.reporter = reporter
+        this.sessionFactory = sessionFactory
         this.specs = specs
         this.config = Object.assign({
             mochaOpts: {}
@@ -107,6 +108,11 @@ class MochaAdapter {
 
             this.runner.suite.beforeAll(this.wrapHook('beforeSuite'))
             this.runner.suite.afterAll(this.wrapHook('afterSuite'))
+
+            if (this.config.sharding === 'block') {
+                this.runner.suite.beforeEach(this.sessionFactory.setup)
+                this.runner.suite.afterEach(this.sessionFactory.teardown)
+            }
         })
         await executeHooksWithArgs(this.config.after, [runtimeError || result, this.capabilities, this.specs])
 

@@ -66,18 +66,39 @@ export default class Runner extends EventEmitter {
         /**
          * create `browser` stub only if `specFiltering` feature is enabled
          */
-        let browser = this.config.featureFlags.specFiltering === true ? await this._startSession({
-            ...this.config,
-            _automationProtocol: this.config.automationProtocol,
-            automationProtocol: './protocol-stub'
-        }, caps) : undefined
+        let browser
+        if (this.config.featureFlags.specFiltering === true) {
+            browser = await this._startSession({
+                ...this.config,
+                _automationProtocol: this.config.automationProtocol,
+                automationProtocol: './protocol-stub'
+            }, caps)
+        }
 
         this.reporter = new BaseReporter(this.config, this.cid, { ...caps })
+
+        const sessionFactory = {
+            setup: async () => {
+                await runHook('beforeSession', this.config, this.caps, this.specs)
+                return this._initSession(this.config, this.caps, browser)
+            },
+            teardown: () => {
+                return this.endSession()
+            }
+        }
+
         /**
          * initialise framework
          */
         this.framework = initialisePlugin(this.config.framework, 'framework')
-        this.framework = await this.framework.init(cid, this.config, specs, caps, this.reporter)
+        this.framework = await this.framework.init(
+            cid,
+            this.config,
+            specs,
+            caps,
+            this.reporter,
+            sessionFactory
+        )
         process.send({ name: 'testFrameworkInit', content: { cid, caps, specs, hasTests: this.framework.hasTests() } })
         if (!this.framework.hasTests()) {
             return this._shutdown(0)
@@ -93,63 +114,64 @@ export default class Runner extends EventEmitter {
             interval: this.config.waitforInterval, // interval between attempts
         })
 
-        await runHook('beforeSession', this.config, this.caps, this.specs)
-        browser = await this._initSession(this.config, this.caps, browser)
-
-        this.inWatchMode = Boolean(this.config.watch)
-
         /**
-         * return if session initialisation failed
+         * only create session before we run the framework if we parallelize
+         * on file level
          */
-        if (!browser) {
-            return this._shutdown(1)
-        }
+        if (this.config.sharding === 'file') {
+            browser = await sessionFactory.setup()
+            this.reporter.caps = browser.capabilities
 
-        this.reporter.caps = browser.capabilities
+            /**
+             * return if session initialisation failed
+             */
+            if (!browser) {
+                return this._shutdown(1)
+            }
+
+            /**
+             * kill session of SIGINT signal showed up while trying to
+             * get a session ID
+             */
+            if (this.sigintWasCalled) {
+                log.info('SIGINT signal detected while starting session, shutting down...')
+                await this.endSession()
+                return this._shutdown(0)
+            }
+
+            /**
+             * initialisation successful, send start message
+             */
+            this.reporter.emit('runner:start', {
+                cid,
+                specs,
+                config: this.config,
+                isMultiremote,
+                sessionId: browser.sessionId,
+                capabilities: isMultiremote
+                    ? browser.instances.reduce((caps, browserName) => {
+                        caps[browserName] = browser[browserName].capabilities
+                        caps[browserName].sessionId = browser[browserName].sessionId
+                        return caps
+                    }, {})
+                    : { ...browser.capabilities, sessionId: browser.sessionId },
+                retry: this.config.specFileRetryAttempts
+            })
+
+            /**
+             * report sessionId and target connection information to worker
+             */
+            const instances = getInstancesData(browser, isMultiremote)
+            const { protocol, hostname, port, path, queryParams } = browser.options
+            const { isW3C, sessionId } = browser
+            process.send({
+                origin: 'worker',
+                name: 'sessionStarted',
+                content: { sessionId, isW3C, protocol, hostname, port, path, queryParams, isMultiremote, instances }
+            })
+        }
 
         await executeHooksWithArgs(this.config.before, [this.caps, this.specs])
-
-        /**
-         * kill session of SIGINT signal showed up while trying to
-         * get a session ID
-         */
-        if (this.sigintWasCalled) {
-            log.info('SIGINT signal detected while starting session, shutting down...')
-            await this.endSession()
-            return this._shutdown(0)
-        }
-
-        const instances = getInstancesData(browser, isMultiremote)
-
-        /**
-         * initialisation successful, send start message
-         */
-        this.reporter.emit('runner:start', {
-            cid,
-            specs,
-            config: this.config,
-            isMultiremote,
-            sessionId: browser.sessionId,
-            capabilities: isMultiremote
-                ? browser.instances.reduce((caps, browserName) => {
-                    caps[browserName] = browser[browserName].capabilities
-                    caps[browserName].sessionId = browser[browserName].sessionId
-                    return caps
-                }, {})
-                : { ...browser.capabilities, sessionId: browser.sessionId },
-            retry: this.config.specFileRetryAttempts
-        })
-
-        /**
-         * report sessionId and target connection information to worker
-         */
-        const { protocol, hostname, port, path, queryParams } = browser.options
-        const { isW3C, sessionId } = browser
-        process.send({
-            origin: 'worker',
-            name: 'sessionStarted',
-            content: { sessionId, isW3C, protocol, hostname, port, path, queryParams, isMultiremote, instances }
-        })
 
         /**
          * kick off tests in framework
@@ -157,7 +179,10 @@ export default class Runner extends EventEmitter {
         let failures = 0
         try {
             failures = await this.framework.run()
-            await this._fetchDriverLogs(this.config, caps.excludeDriverLogs)
+
+            if (this.config.sharding === 'file') {
+                await this._fetchDriverLogs(this.config, caps.excludeDriverLogs)
+            }
         } catch (e) {
             log.error(e)
             this.emit('error', e)
@@ -167,15 +192,15 @@ export default class Runner extends EventEmitter {
         /**
          * in watch mode we don't close the session and leave current page opened
          */
-        if (!args.watch) {
-            await this.endSession()
-        }
+        if (!args.watch && this.config.sharding === 'file') {
+            await sessionFactory.teardown()
 
-        this.reporter.emit('runner:end', {
-            failures,
-            cid: this.cid,
-            retries
-        })
+            this.reporter.emit('runner:end', {
+                failures,
+                cid: this.cid,
+                retries
+            })
+        }
 
         return this._shutdown(failures)
     }
