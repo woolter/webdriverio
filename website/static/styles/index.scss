@@ -21,6 +21,14 @@
 @import '_components/tables';
 @import '_components/navigation';
 
+--ifm-color-primary: #ea5906;
+--ifm-color-primary-dark: #d35005;
+--ifm-color-primary-darker: #c74c05;
+--ifm-color-primary-darkest: #a43e04;
+--ifm-color-primary-light: #f9640f;
+--ifm-color-primary-lighter: #f96c1b;
+--ifm-color-primary-lightest: #fa823e;
+
 html,
 body {
     width: 100%;

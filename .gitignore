@@ -82,6 +82,8 @@ website/i18n/*
 docs/api/**/*.md
 !docs/api/expect.md
 docs/_*.md
+.docusaurus
+.cache-loader
 
 # Editor files
 .idea

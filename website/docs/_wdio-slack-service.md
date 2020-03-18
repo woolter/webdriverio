@@ -1,0 +1,71 @@
+---
+id: wdio-slack-service
+title: Slack Service
+custom_edit_url: https://github.com/carmenmitru/wdio-slack-service/edit/master/README.md
+---
+
+> wdio-slack-service is a 3rd party package, for more information please see [GitHub](https://github.com/carmenmitru/wdio-slack-service) | [npm](https://www.npmjs.com/package/wdio-slack-service)
+
+> A WebdriverIO service which sends notifications of test results to Slack.
+
+### Installation
+
+The easiest way is to keep `wdio-slack-service` as a devDependency in your `package.json`.
+
+```json
+{
+  "devDependencies": {
+    "wdio-slack-service": "2.0.6"
+  }
+}
+```
+
+You can simple do it by:
+
+```bash
+npm install wdio-slack-service --save-dev
+```
+
+Instructions on how to install `WebdriverIO` can be found [here.](https://webdriver.io/docs/gettingstarted.html)
+
+### Configuration
+At the top of the wdio.conf.js-file, add:
+ 
+```js
+// wdio.conf.js
+var slack = require('wdio-slack-service');
+```
+
+In order to use the service you need to add slack to your services array in wdio.conf.js
+
+```js
+// wdio.conf.js
+export.config = {
+  services: : [
+    [slack, {
+      webhook: process.env.SLACK_WEBHOOK_URL || "https://hooks.slack.com/........",       
+    }],
+  ],
+};
+```
+
+### Configuration Options
+
+The following configuration options are supported and are all optional. By default none of the config options are set.
+For notifications to be sent `webhook` option should atleast be set.
+
+| Option  | Description                                                                                                                                                                                 |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|         |
+| webhook | URL - [Incoming webhook](https://api.slack.com/incoming-webhooks) of the slack channel to which notifications should be sent. If the URL is not configured, notifications will not be sent. |
+
+```js
+// wdio.conf.js
+export.config = {
+  services: : [
+    [slack, {
+      webhook: process.env.SLACK_WEBHOOK_URL || "https://hooks.slack.com/........",       
+    }],
+  ],
+};
+```
