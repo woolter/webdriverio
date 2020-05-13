@@ -6,6 +6,10 @@
   "homepage": "https://github.com/webdriverio/webdriverio/tree/master/packages/webdriver",
   "license": "MIT",
   "main": "./build/index",
+  "exports": {
+    "require": "./build/index.js",
+    "default": "./src/index.mjs"
+  },
   "engines": {
     "node": ">=10.0.0"
   },

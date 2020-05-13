@@ -1,10 +1,10 @@
 import logger from '@wdio/logger'
 
-import { webdriverMonad, sessionEnvironmentDetector } from '@wdio/utils'
-import { validateConfig } from '@wdio/config'
+const { webdriverMonad, sessionEnvironmentDetector } = require('@wdio/utils')
+const { validateConfig } = require('@wdio/config')
 
-import { DEFAULTS } from './constants'
-import { startWebDriverSession, getPrototype, getEnvironmentVars, setupDirectConnect } from './utils'
+import { DEFAULTS } from './constants.mjs'
+import { startWebDriverSession, getPrototype, getEnvironmentVars, setupDirectConnect } from './utils.mjs'
 
 export default class WebDriver {
     static async newSession (options = {}, modifier, userPrototype = {}, customCommandWrapper) {
@@ -79,4 +79,4 @@ export default class WebDriver {
 /**
  * Helper methods consumed by webdriverio package
  */
-export { getPrototype }
+export { getPrototype, WebDriver }

@@ -5,10 +5,11 @@ import EventEmitter from 'events'
 
 import got from 'got'
 import logger from '@wdio/logger'
-import { transformCommandLogResult } from '@wdio/utils'
+import utils from '@wdio/utils'
 
-import { isSuccessfulResponse, getErrorFromResponseBody } from './utils'
-import pkg from '../package.json'
+import { isSuccessfulResponse, getErrorFromResponseBody } from './utils.mjs'
+
+import * as pkg from '../package.json'
 
 const DEFAULT_HEADERS = {
     'Connection': 'keep-alive',
@@ -16,7 +17,7 @@ const DEFAULT_HEADERS = {
     'User-Agent': 'webdriver/' + pkg.version
 }
 
-const log = logger('webdriver')
+const log = logger.default('webdriver')
 const agents = {
     http: new http.Agent({ keepAlive: true }),
     https: new https.Agent({ keepAlive: true })
@@ -106,7 +107,7 @@ export default class WebDriverRequest extends EventEmitter {
         log.info(`[${fullRequestOptions.method}] ${fullRequestOptions.uri.href}`)
 
         if (fullRequestOptions.json && Object.keys(fullRequestOptions.json).length) {
-            log.info('DATA', transformCommandLogResult(fullRequestOptions.json))
+            log.info('DATA', utils.transformCommandLogResult(fullRequestOptions.json))
         }
 
         /**

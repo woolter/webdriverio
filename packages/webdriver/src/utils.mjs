@@ -1,12 +1,13 @@
 import merge from 'lodash.merge'
-import logger from '@wdio/logger'
-import {
+
+const logger = require('@wdio/logger')
+const {
     WebDriverProtocol, MJsonWProtocol, JsonWProtocol, AppiumProtocol, ChromiumProtocol,
     SauceLabsProtocol, SeleniumProtocol
-} from '@wdio/protocols'
+} = require('@wdio/protocols')
 
-import WebDriverRequest from './request'
-import command from './command'
+import WebDriverRequest from './request.mjs'
+import command from './command.mjs'
 
 const log = logger('webdriver')
 

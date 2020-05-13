@@ -1,7 +1,7 @@
 import logger from '@wdio/logger'
-import { commandCallStructure, isValidParameter, getArgumentType } from '@wdio/utils'
+const { commandCallStructure, isValidParameter, getArgumentType } = require('@wdio/utils')
 
-import WebDriverRequest from './request'
+import WebDriverRequest from './request.mjs'
 
 const log = logger('webdriver')
 
